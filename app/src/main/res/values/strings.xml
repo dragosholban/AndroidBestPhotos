@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BestPhotos</string>
+    <string name="facebook_app_id">1645117652223035</string>
+    <string name="fb_login_protocol_scheme">fb1645117652223035</string>
 </resources>
