@@ -27,4 +27,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     compile 'com.facebook.android:facebook-android-sdk:[4,5)'
     compile 'com.google.code.gson:gson:2.8.2'
+    compile 'com.android.support:recyclerview-v7:26.1.+'
+    implementation 'com.squareup.picasso:picasso:2.71828'
 }

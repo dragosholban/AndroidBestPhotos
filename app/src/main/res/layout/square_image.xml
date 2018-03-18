@@ -1,0 +1,46 @@
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_constraintDimensionRatio="H,1:1"
+    android:gravity="center"
+    android:layout_margin="1dp"
+    >
+
+    <ImageView
+        android:id="@+id/gridImageview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:onClick="onImageClick"
+        android:scaleType="centerCrop"
+        app:layout_constraintDimensionRatio="H,1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/likesCount"
+        android:background="@layout/rounded_border_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:text="0"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="normal"
+        android:textAlignment="center"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="10"
+        android:shadowColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@id/gridImageview"
+        app:layout_constraintEnd_toEndOf="@id/gridImageview"
+        />
+</android.support.constraint.ConstraintLayout>

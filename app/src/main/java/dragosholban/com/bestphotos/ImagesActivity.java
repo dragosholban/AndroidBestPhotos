@@ -1,8 +1,12 @@
 package dragosholban.com.bestphotos;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
@@ -21,11 +25,15 @@ public class ImagesActivity extends AppCompatActivity {
     private static final String TAG = ImagesActivity.class.getName();
 
     private ArrayList<FacebookImage> images = new ArrayList<>();
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_images);
+
+        recyclerView = this.findViewById(R.id.recyclerView);
+        final ImagesActivity activity = this;
 
         GraphRequest.Callback callback = new GraphRequest.Callback() {
 
@@ -81,11 +89,23 @@ public class ImagesActivity extends AppCompatActivity {
                 if (fbPhotos.paging != null && fbPhotos.paging.cursors.after != null) {
                     GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500&after=" + fbPhotos.paging.cursors.after, null, HttpMethod.GET, this);
                     request.executeAsync();
+                } else {
+                    recyclerView.setAdapter(new ImageRecyclerViewAdapter(activity, images));
                 }
             }
         };
 
         GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500", null, HttpMethod.GET, callback);
         request.executeAsync();
+    }
+
+    public void onImageClick(View view) {
+        String link = (String) view.getTag();
+        if (link != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+        }
     }
 }
