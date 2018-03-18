@@ -168,4 +168,10 @@ public class ImageRecyclerViewAdapter extends RecyclerView.Adapter {
     public int getItemCount() {
         return images.size();
     }
+
+    public void updateData(ArrayList<FacebookImage> images) {
+        this.images.clear();
+        distributeImages(images);
+        notifyDataSetChanged();
+    }
 }

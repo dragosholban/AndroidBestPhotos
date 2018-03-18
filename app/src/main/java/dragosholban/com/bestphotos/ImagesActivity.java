@@ -2,6 +2,7 @@ package dragosholban.com.bestphotos;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
@@ -19,23 +20,30 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
-public class ImagesActivity extends AppCompatActivity {
+public class ImagesActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = ImagesActivity.class.getName();
 
     private ArrayList<FacebookImage> images = new ArrayList<>();
     private RecyclerView recyclerView;
+    private SwipeRefreshLayout mRefreshlayout;
+    private GraphRequest.Callback callback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_images);
 
+        mRefreshlayout = findViewById(R.id.swiperefresh);
+        mRefreshlayout.setOnRefreshListener(this);
+
         recyclerView = this.findViewById(R.id.recyclerView);
         final ImagesActivity activity = this;
 
-        GraphRequest.Callback callback = new GraphRequest.Callback() {
+        callback = new GraphRequest.Callback() {
 
             @Override
             public void onCompleted(GraphResponse response) {
@@ -90,13 +98,29 @@ public class ImagesActivity extends AppCompatActivity {
                     GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500&after=" + fbPhotos.paging.cursors.after, null, HttpMethod.GET, this);
                     request.executeAsync();
                 } else {
-                    recyclerView.setAdapter(new ImageRecyclerViewAdapter(activity, images));
+                    mRefreshlayout.setRefreshing(false);
+                    sortImages(images);
+                    ImageRecyclerViewAdapter adapter = (ImageRecyclerViewAdapter) recyclerView.getAdapter();
+                    if (adapter != null) {
+                        adapter.updateData(images);
+                    } else {
+                        recyclerView.setAdapter(new ImageRecyclerViewAdapter(activity, images));
+                    }
                 }
             }
         };
 
-        GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500", null, HttpMethod.GET, callback);
-        request.executeAsync();
+        loadImages();
+    }
+
+    private void sortImages(ArrayList<FacebookImage> images) {
+        Collections.sort(images, new Comparator<FacebookImage>() {
+            @Override
+            public int compare(FacebookImage i1, FacebookImage i2) {
+                return ((Integer) i1.reactions).compareTo(i2.reactions);
+            }
+        });
+        Collections.reverse(images);
     }
 
     public void onImageClick(View view) {
@@ -107,5 +131,17 @@ public class ImagesActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }
+    }
+
+    @Override
+    public void onRefresh() {
+        loadImages();
+    }
+
+    private void loadImages() {
+        images.clear();
+        mRefreshlayout.setRefreshing(true);
+        GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500", null, HttpMethod.GET, callback);
+        request.executeAsync();
     }
 }
