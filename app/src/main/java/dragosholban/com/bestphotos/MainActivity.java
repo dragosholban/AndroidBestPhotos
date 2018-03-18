@@ -26,6 +26,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        boolean loggedIn = AccessToken.getCurrentAccessToken() != null;
+        if (loggedIn) {
+            Intent intent = new Intent(this, ImagesActivity.class);
+            this.startActivity(intent);
+
+            return;
+        }
+
         LoginButton loginButton = findViewById(R.id.login_button);
         loginButton.setReadPermissions(Arrays.asList("user_photos"));
 
