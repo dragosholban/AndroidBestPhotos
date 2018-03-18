@@ -2,12 +2,18 @@ package dragosholban.com.bestphotos;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
@@ -20,6 +26,7 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -31,11 +38,17 @@ public class ImagesActivity extends AppCompatActivity implements SwipeRefreshLay
     private RecyclerView recyclerView;
     private SwipeRefreshLayout mRefreshlayout;
     private GraphRequest.Callback callback;
+    private Spinner yearsSpinner;
+    private ArrayList<String> filterYears = new ArrayList<>(Arrays.asList("All"));
+    private ArrayAdapter<CharSequence> yearsAdapter;
+    private int selectedYearPosition = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_images);
+
+        yearsAdapter = new ArrayAdapter<>(this, R.layout.simple_spinner_dropdown_item);
 
         mRefreshlayout = findViewById(R.id.swiperefresh);
         mRefreshlayout.setOnRefreshListener(this);
@@ -70,6 +83,12 @@ public class ImagesActivity extends AppCompatActivity implements SwipeRefreshLay
                     }
                     image.createdAt = date.getTime();
 
+                    // add years to filter by
+                    String year = String.valueOf(date.getYear() + 1900);
+                    if (!filterYears.contains(year)) {
+                        filterYears.add(year);
+                    }
+
                     // find the closest image to 300x300px
                     FacebookPhotos.Datum.Image imageSource = null;
                     for (FacebookPhotos.Datum.Image im : datum.images) {
@@ -99,13 +118,11 @@ public class ImagesActivity extends AppCompatActivity implements SwipeRefreshLay
                     request.executeAsync();
                 } else {
                     mRefreshlayout.setRefreshing(false);
+                    yearsAdapter.clear();
+                    yearsAdapter.addAll(filterYears);
+                    yearsAdapter.notifyDataSetChanged();
                     sortImages(images);
-                    ImageRecyclerViewAdapter adapter = (ImageRecyclerViewAdapter) recyclerView.getAdapter();
-                    if (adapter != null) {
-                        adapter.updateData(images);
-                    } else {
-                        recyclerView.setAdapter(new ImageRecyclerViewAdapter(activity, images));
-                    }
+                    filterFacebookPhotos();
                 }
             }
         };
@@ -143,5 +160,54 @@ public class ImagesActivity extends AppCompatActivity implements SwipeRefreshLay
         mRefreshlayout.setRefreshing(true);
         GraphRequest request = new GraphRequest(AccessToken.getCurrentAccessToken(), "me/photos?fields=picture,reactions.limit(1).summary(true),link,images,created_time&type=uploaded&limit=500", null, HttpMethod.GET, callback);
         request.executeAsync();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.android_action_bar_spinner_menu, menu);
+
+        MenuItem item = menu.findItem(R.id.spinner);
+        yearsSpinner = (Spinner) MenuItemCompat.getActionView(item);
+        yearsSpinner.setPadding(0, 0, 0, 0);
+        yearsSpinner.setAdapter(yearsAdapter);
+
+        yearsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                selectedYearPosition = i;
+                filterFacebookPhotos();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        return true;
+    }
+
+    private void filterFacebookPhotos() {
+        ArrayList<FacebookImage> filteredImages = new ArrayList<>();
+
+        if (selectedYearPosition == 0) {
+            // all images
+            filteredImages = images;
+        } else {
+            String year = filterYears.get(selectedYearPosition);
+            for (FacebookImage image : images) {
+                Date imDate = new Date(image.createdAt);
+                if (imDate.getYear() + 1900 == Integer.valueOf(year)) {
+                    filteredImages.add(image);
+                }
+            }
+        }
+
+        ImageRecyclerViewAdapter adapter = (ImageRecyclerViewAdapter) recyclerView.getAdapter();
+        if (adapter != null) {
+            adapter.updateData(filteredImages);
+        } else {
+            recyclerView.setAdapter(new ImageRecyclerViewAdapter(this, filteredImages));
+        }
     }
 }
